@@ -1,0 +1,18 @@
+server:
+  port: 8080
+
+
+#The possible levels are, in order of precedence: TRACE, DEBUG, INFO, WARN and ERROR.
+logging:
+  level:
+    root: ERROR
+    sm-controller: DEBUG
+    sm-repository: INFO
+    sm: INFO
+    org.springframework: INFO
+
+  group:
+    spring: "org.springframework"
+    sm-repository: "com.sm.repo"
+    sm-controller: "com.sm.controller"
+    sm: "com.sm"
