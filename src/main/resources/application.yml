@@ -16,3 +16,9 @@ logging:
     sm-repository: "com.sm.repo"
     sm-controller: "com.sm.controller"
     sm: "com.sm"
+
+file:
+  write_json: true
+  max-filesize: 50MB
+  total-filesize: 10GB
+  max-history: 150

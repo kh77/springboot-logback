@@ -1,53 +1,103 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration>
+<configuration debug="true">
 
-    <property name="LOGS" value="./logs" />
+    <property name="LOGS" value="${catalina.base}/logs"/>
 
-    <appender name="Console"
-              class="ch.qos.logback.core.ConsoleAppender">
+    <!--<property file="C:\opt\config\application.yml"/>-->
+    <property resource="application.yml"/>
+    <springProperty scope="context" name="write_json" source="file.write_json"/>
+    <springProperty scope="context" name="max-filesize" source="file.max-filesize"/>
+    <springProperty scope="context" name="total-filesize" source="file.total-filesize"/>
+    <springProperty scope="context" name="max-history" source="file.max-history"/>
+
+
+    <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
         <layout class="ch.qos.logback.classic.PatternLayout">
-            <Pattern>
-                %yellow(%d{yyyy-MM-dd HH:mm:ss.SSS}) %highlight(%-5level) [%blue(%t)] %yellow(%C{0.}): [%msg]%n%throwable
+            <Pattern>%yellow(%d{yyyy-MM-dd HH:mm:ss.SSS}) %highlight(%-5level) [%blue(%t)]
+                %yellow(%C{0.}):[%msg]%n%throwable
             </Pattern>
         </layout>
     </appender>
+    <!-- LOG everything at INFO level -->
+    <if condition="${write_json}">
+        <then>
+            <appender name="RollingFileJson" class="ch.qos.logback.core.rolling.RollingFileAppender">
+                <file>${LOGS}/app-log.json</file>
+                <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+                    <layout class="ch.qos.logback.contrib.json.classic.JsonLayout">
+                        <timestampFormat>yyyy-MM-dd'T'HH:mm:ss.SSS</timestampFormat>
+                        <!--<timestampFormatTimezoneId>Etc/UTC</timestampFormatTimezoneId>-->
+                        <jsonFormatter class="ch.qos.logback.contrib.jackson.JacksonJsonFormatter">
+                            <prettyPrint>true</prettyPrint>
+                        </jsonFormatter>
+                    </layout>
+                </encoder>
 
-    <appender name="RollingFile"
-              class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOGS}/spring-boot-logger.log</file>
-        <encoder
-                class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <Pattern>%d %p %C{1.} [%t] %m%n</Pattern>
-        </encoder>
-
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <!-- rollover daily and when the file reaches 10 MegaBytes -->
-            <fileNamePattern>${LOGS}/archived/spring-boot-logger-%d{yyyy-MM-dd}.%i.log
-            </fileNamePattern>
-                <!-- each archived file, size max 10MB -->
-                <maxFileSize>10MB</maxFileSize>
-                <!-- total size of all archive files, if total size > 20GB,
+                <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                    <!--rollover daily and when the file reaches 10 MegaBytes -->
+                    <fileNamePattern>${LOGS}/archived/app-log-%d{yyyy-MM-dd}.%i.json</fileNamePattern>
+                    <maxFileSize>${max-filesize}</maxFileSize>
+                    <!-- total size of all archive files, if total size > 10GB,
                     it will delete old archived file -->
-                <totalSizeCap>20GB</totalSizeCap>
-                <!-- 60 days to keep -->
-                <maxHistory>60</maxHistory>
-        </rollingPolicy>
-    </appender>
+                    <totalSizeCap>${total-filesize}</totalSizeCap>
+                    <!-- 150 days to keep -->
+                    <maxHistory>${max-history}</maxHistory>
+                </rollingPolicy>
+            </appender>
+        </then>
+        <else>
+            <appender name="RollingFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+                <file>${LOGS}/app-log.log</file>
+                <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+                    <Pattern>%d %p %C{1.} [%t] %m%n</Pattern>
+                </encoder>
+
+                <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                    <!--rollover daily and when the file reaches 10 MegaBytes -->
+                    <fileNamePattern>${LOGS}/archived/app-log-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+                    <maxFileSize>${max-filesize}</maxFileSize>
+                    <!-- total size of all archive files, if total size > 10GB,
+                    it will delete old archived file -->
+                    <totalSizeCap>${total-filesize}</totalSizeCap>
+                    <!-- 150 days to keep -->
+                    <maxHistory>${max-history}</maxHistory>
+                </rollingPolicy>
+            </appender>
+
+        </else>
+    </if>
+
 
     <!-- LOG everything at INFO level -->
-    <root level="ERROR">
-        <appender-ref ref="RollingFile" />
-        <appender-ref ref="Console" />
-    </root>
-
-    <logger name="com.sm" level="INFO" additivity="false">
-        <appender-ref ref="RollingFile" />
-        <appender-ref ref="Console" />
-    </logger>
-
-    <logger name="org.springframework" level="INFO" additivity="false">
-        <appender-ref ref="RollingFile" />
-        <appender-ref ref="Console" />
-    </logger>
+    <if condition='${write_json}'>
+        <then>
+            <root level="ERROR">
+                <appender-ref ref="RollingFileJson"/>
+                <appender-ref ref="Console"/>
+            </root>
+            <logger name="com.sm" level="INFO" additivity="false">
+                <appender-ref ref="RollingFileJson"/>
+                <appender-ref ref="Console"/>
+            </logger>
+            <logger name="org.springframework" level="INFO" additivity="false">
+                <appender-ref ref="RollingFileJson"/>
+                <appender-ref ref="Console"/>
+            </logger>
+        </then>
+        <else>
+            <root level="ERROR">
+                <appender-ref ref="RollingFile"/>
+                <appender-ref ref="Console"/>
+            </root>
+            <logger name="com.sm" level="INFO" additivity="false">
+                <appender-ref ref="RollingFile"/>
+                <appender-ref ref="Console"/>
+            </logger>
+            <logger name="org.springframework" level="INFO" additivity="false">
+                <appender-ref ref="RollingFile"/>
+                <appender-ref ref="Console"/>
+            </logger>
+        </else>
+    </if>
 
 </configuration>
